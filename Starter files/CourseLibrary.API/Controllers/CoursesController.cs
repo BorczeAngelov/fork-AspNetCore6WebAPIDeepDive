@@ -16,10 +16,8 @@ public class CoursesController : ControllerBase
     public CoursesController(ICourseLibraryRepository courseLibraryRepository,
         IMapper mapper)
     {
-        _courseLibraryRepository = courseLibraryRepository ??
-            throw new ArgumentNullException(nameof(courseLibraryRepository));
-        _mapper = mapper ??
-            throw new ArgumentNullException(nameof(mapper));
+        _courseLibraryRepository = courseLibraryRepository ?? throw new ArgumentNullException(nameof(courseLibraryRepository));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
     [HttpGet]
@@ -34,7 +32,7 @@ public class CoursesController : ControllerBase
         return Ok(_mapper.Map<IEnumerable<CourseDto>>(coursesForAuthorFromRepo));
     }
 
-    [HttpGet("{courseId}")]
+    [HttpGet("{courseId}", Name = "GetCourseForAuthor")]
     public async Task<ActionResult<CourseDto>> GetCourseForAuthor(Guid authorId, Guid courseId)
     {
         if (!await _courseLibraryRepository.AuthorExistsAsync(authorId))
@@ -53,20 +51,23 @@ public class CoursesController : ControllerBase
 
 
     [HttpPost]
-    public async Task<ActionResult<CourseDto>> CreateCourseForAuthor(
-            Guid authorId, CourseForCreationDto course)
+    public async Task<ActionResult<CourseDto>> CreateCourseForAuthor(Guid authorId, CourseForCreationDto course)
     {
         if (!await _courseLibraryRepository.AuthorExistsAsync(authorId))
         {
             return NotFound();
         }
 
-        var courseEntity = _mapper.Map<Entities.Course>(course);
+        Entities.Course courseEntity = _mapper.Map<Entities.Course>(course);
         _courseLibraryRepository.AddCourse(authorId, courseEntity);
         await _courseLibraryRepository.SaveAsync();
 
-        var courseToReturn = _mapper.Map<CourseDto>(courseEntity);
-        return Ok(courseToReturn);
+        CourseDto courseToReturn = _mapper.Map<CourseDto>(courseEntity);
+
+        return CreatedAtRoute(
+            routeName: "GetCourseForAuthor",
+            routeValues: new { authorId, courseId = courseToReturn.Id },
+            value: courseToReturn);
     }
 
 

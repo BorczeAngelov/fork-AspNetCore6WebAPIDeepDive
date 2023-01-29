@@ -32,30 +32,29 @@ public class AuthorsController : ControllerBase
     [HttpGet("{authorId}", Name = "GetAuthor")]
     public async Task<ActionResult<AuthorDto>> GetAuthor(Guid authorId)
     {
-        // get author from repo
-        var authorFromRepo = await _courseLibraryRepository.GetAuthorAsync(authorId);
+        Entities.Author authorFromRepo = await _courseLibraryRepository.GetAuthorAsync(authorId);
 
         if (authorFromRepo == null)
         {
             return NotFound();
         }
 
-        // return author
         return Ok(_mapper.Map<AuthorDto>(authorFromRepo));
     }
 
     [HttpPost]
-    public async Task<ActionResult<AuthorDto>> CreateAuthor(AuthorDto author)
+    public async Task<ActionResult<AuthorDto>> CreateAuthor(AuthorForCreationDto author)
     {
-        var authorEntity = _mapper.Map<Entities.Author>(author);
+        Entities.Author authorEntity = _mapper.Map<Entities.Author>(author);
 
         _courseLibraryRepository.AddAuthor(authorEntity);
         await _courseLibraryRepository.SaveAsync();
 
-        var authorToReturn = _mapper.Map<AuthorDto>(authorEntity);
+        AuthorDto authorToReturn = _mapper.Map<AuthorDto>(authorEntity);
 
-        return CreatedAtRoute("GetAuthor",
-            new { authorId = authorToReturn.Id },
-            authorToReturn);
+        return CreatedAtRoute(
+            routeName: "GetAuthor",
+            routeValues: new { authorId = authorToReturn.Id },
+            value: authorToReturn);
     }
 }
