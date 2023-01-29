@@ -9,18 +9,19 @@ internal static class StartupHelperExtensions
     // Add services to the container
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddControllers();
+        builder.Services.AddControllers(configure =>
+        {
+            configure.ReturnHttpNotAcceptable = true;
+        }).AddXmlDataContractSerializerFormatters();
 
-        builder.Services.AddScoped<ICourseLibraryRepository, 
-            CourseLibraryRepository>();
+        builder.Services.AddScoped<ICourseLibraryRepository, CourseLibraryRepository>();
 
         builder.Services.AddDbContext<CourseLibraryContext>(options =>
         {
             options.UseSqlite(@"Data Source=library.db");
         });
 
-        builder.Services.AddAutoMapper(
-            AppDomain.CurrentDomain.GetAssemblies());
+        builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
         return builder.Build();
     }
