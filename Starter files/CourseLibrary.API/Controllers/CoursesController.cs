@@ -2,6 +2,7 @@
 using AutoMapper;
 using CourseLibrary.API.Models;
 using CourseLibrary.API.Services;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CourseLibrary.API.Controllers;
@@ -83,7 +84,6 @@ public class CoursesController : ControllerBase
         }
 
         var courseForAuthorFromRepo = await _courseLibraryRepository.GetCourseAsync(authorId, courseId);
-
         if (courseForAuthorFromRepo == null)
         {
             return NotFound();
@@ -93,6 +93,36 @@ public class CoursesController : ControllerBase
 
         _courseLibraryRepository.UpdateCourse(courseForAuthorFromRepo);
 
+        await _courseLibraryRepository.SaveAsync();
+        return NoContent();
+    }
+
+    [HttpPatch("{courseId}")]
+    public async Task<IActionResult> PartiallyUpdateCourseForAuthor(
+        [FromRoute] Guid authorId,
+        [FromRoute] Guid courseId,
+        [FromBody] JsonPatchDocument<CourseForUpdateDto> patchDocument)
+    {
+        if (!await _courseLibraryRepository.AuthorExistsAsync(authorId))
+        {
+            return NotFound();
+        }
+
+        var courseForAuthorFromRepo = await _courseLibraryRepository.GetCourseAsync(authorId, courseId);
+        if (courseForAuthorFromRepo == null)
+        {
+            return NotFound();
+        }
+
+        CourseForUpdateDto courseToPatch = _mapper.Map<CourseForUpdateDto>(courseForAuthorFromRepo);
+
+        //first apply patches to DTOs instead to entities
+        //TODO: add validation
+        patchDocument.ApplyTo(courseToPatch);   
+
+        //second map the patched DTO to an entity, and save to to repo
+        _mapper.Map(courseToPatch, courseForAuthorFromRepo);
+        _courseLibraryRepository.UpdateCourse(courseForAuthorFromRepo);
         await _courseLibraryRepository.SaveAsync();
         return NoContent();
     }
