@@ -34,7 +34,9 @@ public class CoursesController : ControllerBase
     }
 
     [HttpGet("{courseId}", Name = "GetCourseForAuthor")]
-    public async Task<ActionResult<CourseDto>> GetCourseForAuthor(Guid authorId, Guid courseId)
+    public async Task<ActionResult<CourseDto>> GetCourseForAuthor(
+        [FromRoute] Guid authorId,
+        [FromRoute] Guid courseId)
     {
         if (!await _courseLibraryRepository.AuthorExistsAsync(authorId))
         {
@@ -85,14 +87,22 @@ public class CoursesController : ControllerBase
 
         var courseForAuthorFromRepo = await _courseLibraryRepository.GetCourseAsync(authorId, courseId);
         if (courseForAuthorFromRepo == null)
-        {
-            return NotFound();
+        {//if not found, then create (Upserting with PUT)
+
+            Entities.Course courseToAdd = _mapper.Map<Entities.Course>(course);
+            courseToAdd.Id = courseId;
+            _courseLibraryRepository.AddCourse(authorId, courseToAdd);
+            await _courseLibraryRepository.SaveAsync();
+
+            CourseDto courseToReturn = _mapper.Map<CourseDto>(courseToAdd);
+            return CreatedAtRoute(
+                routeName: "GetCourseForAuthor",
+                routeValues: new { authorId, courseId = courseToReturn.Id },
+                value: courseToReturn);
         }
 
         _mapper.Map(course, courseForAuthorFromRepo);
-
         _courseLibraryRepository.UpdateCourse(courseForAuthorFromRepo);
-
         await _courseLibraryRepository.SaveAsync();
         return NoContent();
     }
