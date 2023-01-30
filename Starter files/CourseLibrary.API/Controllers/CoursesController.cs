@@ -120,8 +120,21 @@ public class CoursesController : ControllerBase
 
         var courseForAuthorFromRepo = await _courseLibraryRepository.GetCourseAsync(authorId, courseId);
         if (courseForAuthorFromRepo == null)
-        {
-            return NotFound();
+        {//if not found, then create (Upserting with PATCH)
+
+            var courseDto = new CourseForUpdateDto();
+            patchDocument.ApplyTo(courseDto);
+
+            Entities.Course courseToAdd = _mapper.Map<Entities.Course>(courseDto);
+            courseToAdd.Id = courseId;
+            _courseLibraryRepository.AddCourse(authorId, courseToAdd);
+            await _courseLibraryRepository.SaveAsync();
+
+            CourseDto courseToReturn = _mapper.Map<CourseDto>(courseToAdd);
+            return CreatedAtRoute(
+                routeName: "GetCourseForAuthor",
+                routeValues: new { authorId, courseId = courseToReturn.Id },
+                value: courseToReturn);
         }
 
         CourseForUpdateDto courseToPatch = _mapper.Map<CourseForUpdateDto>(courseForAuthorFromRepo);
