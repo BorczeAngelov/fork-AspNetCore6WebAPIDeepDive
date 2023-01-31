@@ -139,11 +139,15 @@ public class CoursesController : ControllerBase
 
         CourseForUpdateDto courseToPatch = _mapper.Map<CourseForUpdateDto>(courseForAuthorFromRepo);
 
-        //first apply patches to DTOs instead to entities
-        //TODO: add validation
-        patchDocument.ApplyTo(courseToPatch);   
+        //1) apply patches to DTOs instead to entities
+        patchDocument.ApplyTo(courseToPatch, ModelState);
+        //2) validate. If NOK return 422 Status
+        if (!TryValidateModel(courseToPatch))
+        {
+            return ValidationProblem(ModelState);
+        }
 
-        //second map the patched DTO to an entity, and save to to repo
+        //3) map the patched DTO to an entity, and save to to repo
         _mapper.Map(courseToPatch, courseForAuthorFromRepo);
         _courseLibraryRepository.UpdateCourse(courseForAuthorFromRepo);
         await _courseLibraryRepository.SaveAsync();
@@ -170,5 +174,4 @@ public class CoursesController : ControllerBase
 
         return NoContent();
     }
-
 }
