@@ -4,6 +4,9 @@ using CourseLibrary.API.Models;
 using CourseLibrary.API.Services;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.Options;
 
 namespace CourseLibrary.API.Controllers;
 
@@ -141,7 +144,7 @@ public class CoursesController : ControllerBase
 
         //1) apply patches to DTOs instead to entities
         patchDocument.ApplyTo(courseToPatch, ModelState);
-        //2) validate. If NOK return 422 Status
+        //2) validate and return status error response
         if (!TryValidateModel(courseToPatch))
         {
             return ValidationProblem(ModelState);
@@ -173,5 +176,14 @@ public class CoursesController : ControllerBase
         await _courseLibraryRepository.SaveAsync();
 
         return NoContent();
+    }
+
+    /// <summary>
+    /// If NOK return 422 Status
+    /// </summary>
+    public override ActionResult ValidationProblem([ActionResultObjectValue] ModelStateDictionary modelStateDictionary)
+    {
+        var options = HttpContext.RequestServices.GetRequiredService<IOptions<ApiBehaviorOptions>>();
+        return (ActionResult)options.Value.InvalidModelStateResponseFactory(ControllerContext); //return custom error response
     }
 }
