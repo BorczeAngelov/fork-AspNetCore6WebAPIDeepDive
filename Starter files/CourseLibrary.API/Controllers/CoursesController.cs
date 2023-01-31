@@ -126,7 +126,11 @@ public class CoursesController : ControllerBase
         {//if not found, then create (Upserting with PATCH)
 
             var courseDto = new CourseForUpdateDto();
-            patchDocument.ApplyTo(courseDto);
+            patchDocument.ApplyTo(courseDto, ModelState);
+            if (!TryValidateModel(courseDto))
+            {
+                return ValidationProblem(ModelState);
+            }
 
             Entities.Course courseToAdd = _mapper.Map<Entities.Course>(courseDto);
             courseToAdd.Id = courseId;
