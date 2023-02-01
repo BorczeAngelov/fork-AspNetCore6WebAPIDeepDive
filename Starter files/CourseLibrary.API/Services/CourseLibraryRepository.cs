@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CourseLibrary.API.Services;
 
-public class CourseLibraryRepository : ICourseLibraryRepository 
+public class CourseLibraryRepository : ICourseLibraryRepository
 {
     private readonly CourseLibraryContext _context;
 
@@ -121,19 +121,21 @@ public class CourseLibraryRepository : ICourseLibraryRepository
 #pragma warning restore CS8603 // Possible null reference return.
     }
 
-   
-    public async Task<IEnumerable<Author>> GetAuthorsAsync(AuthorsResourceParameters authorsResourceParameters)
+
+    public async Task<IEnumerable<Author>> GetAuthorsAsync(
+        AuthorsResourceParameters authorsResourceParameters)
     {
         if (authorsResourceParameters is null)
         {
             throw new ArgumentNullException(nameof(authorsResourceParameters));
         }
 
-        if (string.IsNullOrWhiteSpace(authorsResourceParameters.MainCategory) &&
-            string.IsNullOrWhiteSpace(authorsResourceParameters.SearchQuery))
-        {
-            return await _context.Authors.ToListAsync();
-        }
+        // commented out, so paging always work
+        //if (string.IsNullOrWhiteSpace(authorsResourceParameters.MainCategory) &&
+        //    string.IsNullOrWhiteSpace(authorsResourceParameters.SearchQuery))
+        //{
+        //    return await _context.Authors.ToListAsync();
+        //}
 
         //use IQueryable for Deferred Execution
         IQueryable<Author> collection = _context.Authors as IQueryable<Author>;
@@ -148,13 +150,17 @@ public class CourseLibraryRepository : ICourseLibraryRepository
         {
             authorsResourceParameters.SearchQuery = authorsResourceParameters.SearchQuery.Trim();
             collection = collection
-                .Where(a => 
+                .Where(a =>
                 a.MainCategory.Contains(authorsResourceParameters.SearchQuery) ||
                 a.FirstName.Contains(authorsResourceParameters.SearchQuery) ||
                 a.LastName.Contains(authorsResourceParameters.SearchQuery)); //Where clause for searching (Deferred Execution)
         }
+               
 
-        return await collection.ToListAsync();
+        return await collection
+            .Skip(authorsResourceParameters.PageSize * (authorsResourceParameters.PageNumber - 1))
+            .Take(authorsResourceParameters.PageSize) //paging should be done at end
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<Author>> GetAuthorsAsync(IEnumerable<Guid> authorIds)

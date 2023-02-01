@@ -28,7 +28,8 @@ public class AuthorsController : ControllerBase
     {
         var authorsFromRepo = await _courseLibraryRepository.GetAuthorsAsync(authorsResourceParameters);
 
-        return Ok(_mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepo));
+        //TODO: return metadata about pagination
+        return Ok(_mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepo)); 
     }
 
     [HttpGet("{authorId}", Name = "GetAuthor")]
