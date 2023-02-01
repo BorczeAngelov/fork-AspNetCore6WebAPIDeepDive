@@ -23,9 +23,10 @@ public class AuthorsController : ControllerBase
     [HttpGet]
     [HttpHead] //The HEAD method asks for a response identical to a GET request, but without the response body
     public async Task<ActionResult<IEnumerable<AuthorDto>>> GetAuthors(
-        [FromQuery] string? mainCategory = "")
+        [FromQuery] string? mainCategory = "",
+        [FromQuery] string? searchQuery = "")
     {
-        var authorsFromRepo = await _courseLibraryRepository.GetAuthorsAsync(mainCategory);
+        var authorsFromRepo = await _courseLibraryRepository.GetAuthorsAsync(mainCategory, searchQuery);
 
         return Ok(_mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepo));
     }

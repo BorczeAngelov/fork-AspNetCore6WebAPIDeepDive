@@ -121,18 +121,34 @@ public class CourseLibraryRepository : ICourseLibraryRepository
     }
 
    
-    public async Task<IEnumerable<Author>> GetAuthorsAsync(string? mainCategory)
+    public async Task<IEnumerable<Author>> GetAuthorsAsync(string? mainCategory, string? searchQuery)
     {
-        if (string.IsNullOrWhiteSpace(mainCategory))
+        if (string.IsNullOrWhiteSpace(mainCategory) &&
+            string.IsNullOrWhiteSpace(searchQuery))
         {
             return await _context.Authors.ToListAsync();
         }
 
-        mainCategory = mainCategory.Trim();
+        //use IQueryable for Deferred Execution
+        IQueryable<Author> collection = _context.Authors as IQueryable<Author>;
 
-        return await _context.Authors
-            .Where(a => a.MainCategory == mainCategory)
-            .ToListAsync();
+        if (!string.IsNullOrWhiteSpace(mainCategory))
+        {
+            mainCategory = mainCategory.Trim();
+            collection = collection.Where(a => a.MainCategory == mainCategory); //Where clause for filtering (Deferred Execution)
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            searchQuery = searchQuery.Trim();
+            collection = collection
+                .Where(a => 
+                a.MainCategory.Contains(searchQuery) ||
+                a.FirstName.Contains(searchQuery) ||
+                a.LastName.Contains(searchQuery)); //Where clause for searching (Deferred Execution)
+        }
+
+        return await collection.ToListAsync();
     }
 
     public async Task<IEnumerable<Author>> GetAuthorsAsync(IEnumerable<Guid> authorIds)
