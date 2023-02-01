@@ -121,9 +121,18 @@ public class CourseLibraryRepository : ICourseLibraryRepository
     }
 
    
-    public async Task<IEnumerable<Author>> GetAuthorsAsync()
+    public async Task<IEnumerable<Author>> GetAuthorsAsync(string? mainCategory)
     {
-        return await _context.Authors.ToListAsync();
+        if (string.IsNullOrWhiteSpace(mainCategory))
+        {
+            return await _context.Authors.ToListAsync();
+        }
+
+        mainCategory = mainCategory.Trim();
+
+        return await _context.Authors
+            .Where(a => a.MainCategory == mainCategory)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<Author>> GetAuthorsAsync(IEnumerable<Guid> authorIds)
