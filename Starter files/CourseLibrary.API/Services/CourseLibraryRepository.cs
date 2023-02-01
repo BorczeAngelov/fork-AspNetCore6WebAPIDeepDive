@@ -1,5 +1,6 @@
 ﻿using CourseLibrary.API.DbContexts;
-using CourseLibrary.API.Entities; 
+using CourseLibrary.API.Entities;
+using CourseLibrary.API.ResourceParameters;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseLibrary.API.Services;
@@ -121,10 +122,15 @@ public class CourseLibraryRepository : ICourseLibraryRepository
     }
 
    
-    public async Task<IEnumerable<Author>> GetAuthorsAsync(string? mainCategory, string? searchQuery)
+    public async Task<IEnumerable<Author>> GetAuthorsAsync(AuthorsResourceParameters authorsResourceParameters)
     {
-        if (string.IsNullOrWhiteSpace(mainCategory) &&
-            string.IsNullOrWhiteSpace(searchQuery))
+        if (authorsResourceParameters is null)
+        {
+            throw new ArgumentNullException(nameof(authorsResourceParameters));
+        }
+
+        if (string.IsNullOrWhiteSpace(authorsResourceParameters.MainCategory) &&
+            string.IsNullOrWhiteSpace(authorsResourceParameters.SearchQuery))
         {
             return await _context.Authors.ToListAsync();
         }
@@ -132,20 +138,20 @@ public class CourseLibraryRepository : ICourseLibraryRepository
         //use IQueryable for Deferred Execution
         IQueryable<Author> collection = _context.Authors as IQueryable<Author>;
 
-        if (!string.IsNullOrWhiteSpace(mainCategory))
+        if (!string.IsNullOrWhiteSpace(authorsResourceParameters.MainCategory))
         {
-            mainCategory = mainCategory.Trim();
-            collection = collection.Where(a => a.MainCategory == mainCategory); //Where clause for filtering (Deferred Execution)
+            authorsResourceParameters.MainCategory = authorsResourceParameters.MainCategory.Trim();
+            collection = collection.Where(a => a.MainCategory == authorsResourceParameters.MainCategory); //Where clause for filtering (Deferred Execution)
         }
 
-        if (!string.IsNullOrWhiteSpace(searchQuery))
+        if (!string.IsNullOrWhiteSpace(authorsResourceParameters.SearchQuery))
         {
-            searchQuery = searchQuery.Trim();
+            authorsResourceParameters.SearchQuery = authorsResourceParameters.SearchQuery.Trim();
             collection = collection
                 .Where(a => 
-                a.MainCategory.Contains(searchQuery) ||
-                a.FirstName.Contains(searchQuery) ||
-                a.LastName.Contains(searchQuery)); //Where clause for searching (Deferred Execution)
+                a.MainCategory.Contains(authorsResourceParameters.SearchQuery) ||
+                a.FirstName.Contains(authorsResourceParameters.SearchQuery) ||
+                a.LastName.Contains(authorsResourceParameters.SearchQuery)); //Where clause for searching (Deferred Execution)
         }
 
         return await collection.ToListAsync();

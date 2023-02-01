@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using CourseLibrary.API.Models;
+using CourseLibrary.API.ResourceParameters;
 using CourseLibrary.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,10 +24,9 @@ public class AuthorsController : ControllerBase
     [HttpGet]
     [HttpHead] //The HEAD method asks for a response identical to a GET request, but without the response body
     public async Task<ActionResult<IEnumerable<AuthorDto>>> GetAuthors(
-        [FromQuery] string? mainCategory = "",
-        [FromQuery] string? searchQuery = "")
+        [FromQuery] AuthorsResourceParameters authorsResourceParameters)
     {
-        var authorsFromRepo = await _courseLibraryRepository.GetAuthorsAsync(mainCategory, searchQuery);
+        var authorsFromRepo = await _courseLibraryRepository.GetAuthorsAsync(authorsResourceParameters);
 
         return Ok(_mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepo));
     }
