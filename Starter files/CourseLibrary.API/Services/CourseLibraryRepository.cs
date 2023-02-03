@@ -131,14 +131,6 @@ public class CourseLibraryRepository : ICourseLibraryRepository
             throw new ArgumentNullException(nameof(authorsResourceParameters));
         }
 
-        // commented out, so paging always work
-        //if (string.IsNullOrWhiteSpace(authorsResourceParameters.MainCategory) &&
-        //    string.IsNullOrWhiteSpace(authorsResourceParameters.SearchQuery))
-        //{
-        //    return await _context.Authors.ToListAsync();
-        //}
-
-        //use IQueryable for Deferred Execution
         IQueryable<Author> collection = _context.Authors as IQueryable<Author>;
 
         if (!string.IsNullOrWhiteSpace(authorsResourceParameters.MainCategory))
@@ -155,6 +147,17 @@ public class CourseLibraryRepository : ICourseLibraryRepository
                 a.MainCategory.Contains(authorsResourceParameters.SearchQuery) ||
                 a.FirstName.Contains(authorsResourceParameters.SearchQuery) ||
                 a.LastName.Contains(authorsResourceParameters.SearchQuery)); //Where clause for searching (Deferred Execution)
+        }
+
+        // manual sorting. Use System.Linq.Dynamic.Core instead
+        if (!string.IsNullOrWhiteSpace(authorsResourceParameters.OrderBy))
+        {
+            if (authorsResourceParameters.OrderBy.ToLowerInvariant() == "name")
+            {
+                collection = collection
+                    .OrderBy(a => a.FirstName)
+                    .ThenBy(a => a.LastName);
+            }
         }
 
         return await PagedList<Author>.CreateAsync(
