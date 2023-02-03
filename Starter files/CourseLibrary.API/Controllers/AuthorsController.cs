@@ -14,13 +14,16 @@ public class AuthorsController : ControllerBase
 {
     private readonly ICourseLibraryRepository _courseLibraryRepository;
     private readonly IMapper _mapper;
+    private readonly IPropertyMappingService _propertyMappingService;
 
     public AuthorsController(
         ICourseLibraryRepository courseLibraryRepository,
-        IMapper mapper)
+        IMapper mapper,
+        IPropertyMappingService propertyMappingService)
     {
         _courseLibraryRepository = courseLibraryRepository ?? throw new ArgumentNullException(nameof(courseLibraryRepository));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        _propertyMappingService = propertyMappingService ?? throw new ArgumentNullException(nameof(propertyMappingService));
     }
 
     [HttpGet(Name = "GetAuthors")]
@@ -28,6 +31,12 @@ public class AuthorsController : ControllerBase
     public async Task<ActionResult<IEnumerable<AuthorDto>>> GetAuthors(
         [FromQuery] AuthorsResourceParameters authorsResourceParameters)
     {
+        if (!_propertyMappingService.ValidMappingExistsFor<AuthorDto, Entities.Author>(authorsResourceParameters.OrderBy))
+        {
+            return BadRequest();
+        }
+
+
         PagedList<Entities.Author> authorsFromRepo = await _courseLibraryRepository.GetAuthorsAsync(authorsResourceParameters);
 
         var previousPageLink = authorsFromRepo.HasPrevious
