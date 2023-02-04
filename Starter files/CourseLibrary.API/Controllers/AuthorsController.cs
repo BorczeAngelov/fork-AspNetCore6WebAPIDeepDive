@@ -4,6 +4,7 @@ using CourseLibrary.API.Models;
 using CourseLibrary.API.ResourceParameters;
 using CourseLibrary.API.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Dynamic;
 using System.Text.Json;
 
 namespace CourseLibrary.API.Controllers;
@@ -28,9 +29,10 @@ public class AuthorsController : ControllerBase
 
     [HttpGet(Name = "GetAuthors")]
     [HttpHead] //The HEAD method asks for a response identical to a GET request, but without the response body
-    public async Task<ActionResult<IEnumerable<AuthorDto>>> GetAuthors(
+    public async Task<IActionResult> GetAuthors(
         [FromQuery] AuthorsResourceParameters authorsResourceParameters)
     {
+
         if (!_propertyMappingService.ValidMappingExistsFor<AuthorDto, Entities.Author>(authorsResourceParameters.OrderBy))
         {
             return BadRequest();
@@ -61,7 +63,11 @@ public class AuthorsController : ControllerBase
             key: "X-Pagination",
             value: JsonSerializer.Serialize(paginationMetadata));
 
-        return Ok(_mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepo));
+        IEnumerable<ExpandoObject> results = _mapper
+            .Map<IEnumerable<AuthorDto>>(authorsFromRepo)
+            .ShapeData(authorsResourceParameters.Fields);
+
+        return Ok(results);
     }
 
     private string? CreateAuthorsResourceUri(
@@ -74,6 +80,7 @@ public class AuthorsController : ControllerBase
                 return Url.Link("GetAuthors",
                     new
                     {
+                        fields = authorsResourceParameters.Fields,
                         orderBy = authorsResourceParameters.OrderBy,
                         pageNumber = authorsResourceParameters.PageNumber - 1,
                         pageSize = authorsResourceParameters.PageSize,
@@ -84,6 +91,7 @@ public class AuthorsController : ControllerBase
                 return Url.Link("GetAuthors",
                     new
                     {
+                        fields = authorsResourceParameters.Fields,
                         orderBy = authorsResourceParameters.OrderBy,
                         pageNumber = authorsResourceParameters.PageNumber + 1,
                         pageSize = authorsResourceParameters.PageSize,
@@ -94,6 +102,7 @@ public class AuthorsController : ControllerBase
                 return Url.Link("GetAuthors",
                     new
                     {
+                        fields = authorsResourceParameters.Fields,
                         orderBy = authorsResourceParameters.OrderBy,
                         pageNumber = authorsResourceParameters.PageNumber,
                         pageSize = authorsResourceParameters.PageSize,
