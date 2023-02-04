@@ -113,7 +113,9 @@ public class AuthorsController : ControllerBase
     }
 
     [HttpGet("{authorId}", Name = "GetAuthor")]
-    public async Task<ActionResult<AuthorDto>> GetAuthor(Guid authorId)
+    public async Task<IActionResult> GetAuthor(
+        Guid authorId,
+        [FromQuery] string? fields)
     {
         Entities.Author authorFromRepo = await _courseLibraryRepository.GetAuthorAsync(authorId);
 
@@ -122,7 +124,11 @@ public class AuthorsController : ControllerBase
             return NotFound();
         }
 
-        return Ok(_mapper.Map<AuthorDto>(authorFromRepo));
+        ExpandoObject result = _mapper
+            .Map<AuthorDto>(authorFromRepo)
+            .ShapeData(fields);
+
+        return base.Ok(result);
     }
 
     [HttpPost]
