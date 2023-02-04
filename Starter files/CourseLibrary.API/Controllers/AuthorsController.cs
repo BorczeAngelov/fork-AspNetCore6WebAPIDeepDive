@@ -335,6 +335,7 @@ public class AuthorsController : ControllerBase
         return Ok(fullResourceToReturn);
     }
 
+    // Instead of using "Accept header" we are using the ActionConstraint to contrain a request to certian Accept header value to a specific action
     //[Produces("application/json",
     //    "application/vnd.marvin.hateoas+json",
     //    "application/vnd.marvin.author.full+json",
