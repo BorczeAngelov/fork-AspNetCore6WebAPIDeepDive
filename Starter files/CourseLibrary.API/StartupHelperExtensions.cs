@@ -52,7 +52,8 @@ internal static class StartupHelperExtensions
         builder.Services.AddScoped<ICourseLibraryRepository, CourseLibraryRepository>();
 
         //Transient for lightweight stateless services
-        builder.Services.AddTransient<IPropertyMappingService, PropertyMappingService>(); 
+        builder.Services.AddTransient<IPropertyMappingService, PropertyMappingService>();
+        builder.Services.AddTransient<IPropertyCheckerService, PropertyCheckerService>();
 
         builder.Services.AddDbContext<CourseLibraryContext>(options =>
         {
