@@ -1,6 +1,7 @@
 ﻿using CourseLibrary.API.DbContexts;
 using CourseLibrary.API.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Serialization;
@@ -15,7 +16,8 @@ internal static class StartupHelperExtensions
         builder.Services.AddControllers(configure =>
         {
             configure.ReturnHttpNotAcceptable = true;
-        }).AddNewtonsoftJson(setupAction =>
+        })
+        .AddNewtonsoftJson(setupAction =>
         {
             setupAction.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
         })
@@ -47,6 +49,18 @@ internal static class StartupHelperExtensions
                     ContentTypes = { "application/problem+json" }
                 };
             };
+        });
+
+        builder.Services.Configure<MvcOptions>(config =>
+        {
+            var newtonsoftJsonOutputFormatter = config.OutputFormatters
+                  .OfType<NewtonsoftJsonOutputFormatter>()?.FirstOrDefault();
+
+            if (newtonsoftJsonOutputFormatter != null)
+            {
+                newtonsoftJsonOutputFormatter.SupportedMediaTypes
+                    .Add("application/vnd.marvin.hateoas+json");
+            }
         });
 
         builder.Services.AddScoped<ICourseLibraryRepository, CourseLibraryRepository>();
