@@ -56,7 +56,7 @@ public class CoursesController : ControllerBase
     }
 
 
-    [HttpPost]
+    [HttpPost(Name = "CreateCourseForAuthor")]
     public async Task<ActionResult<CourseDto>> CreateCourseForAuthor(Guid authorId, CourseForCreationDto course)
     {
         if (!await _courseLibraryRepository.AuthorExistsAsync(authorId))
