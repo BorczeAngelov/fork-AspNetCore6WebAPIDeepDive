@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Serialization;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
 
 namespace CourseLibrary.API;
 
@@ -80,6 +81,17 @@ internal static class StartupHelperExtensions
 
         builder.Services.AddResponseCaching();
 
+        builder.Services.AddHttpCacheHeaders(
+            (experationModelOptions) =>
+            {
+                experationModelOptions.MaxAge = 60;
+                experationModelOptions.CacheLocation = Marvin.Cache.Headers.CacheLocation.Private;
+            },
+            (validationModelOptions) =>
+            {
+                validationModelOptions.MustRevalidate = true;
+            });
+
         return builder.Build();
     }
 
@@ -92,6 +104,8 @@ internal static class StartupHelperExtensions
         }
 
         app.UseResponseCaching(); //caching must be executed before anything else
+
+        app.UseHttpCacheHeaders();
 
         app.UseAuthorization();
 
